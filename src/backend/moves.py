@@ -110,20 +110,20 @@ def get_paths(start: Coord, end: Coord, kind: Literal["straight", "diag"]) -> li
 def all_pawn_moves(player: "Player", board: "Board", coord: Coord) -> list[Coord]:
     from src.backend.game import is_white
 
-    direction = 1 if player.is_white else -1
+    direction = -1 if player.is_white else 1
     x, y = coord
 
     possible_moves: list[Coord] = []
 
     # move forward
-    new_coord = (x, y + direction)
+    new_coord = (x + direction, y)
     if is_coord(new_coord) and board.get(new_coord) is None:
         possible_moves.append(new_coord)
 
     # move diag
     new_coords = [
-        (x - 1, y + direction),
-        (x + 1, y + direction),
+        (x + direction, y - 1),
+        (x + direction, y + 1),
     ]
 
     for new_coord in new_coords:
@@ -136,9 +136,9 @@ def all_pawn_moves(player: "Player", board: "Board", coord: Coord) -> list[Coord
             possible_moves.append(new_coord)
 
     # long move
-    is_starting_coord = (y == 1 and player.is_white) or (y == BOARD_SIZE - 2 and not player.is_white)
+    is_starting_coord = (x == 1 and player.is_white) or (x == BOARD_SIZE - 2 and not player.is_white)
 
-    new_coord = (x, y + 2 * direction)
+    new_coord = (x + 2 * direction, y)
     if is_coord(new_coord) and is_starting_coord and board.get(new_coord) is None:
         possible_moves.append(new_coord)
 
