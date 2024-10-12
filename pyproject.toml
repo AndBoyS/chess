@@ -1,0 +1,27 @@
+[tool.ruff]
+line-length = 120
+
+[tool.mypy]
+strict = true
+disallow_untyped_calls = false
+allow_redefinition = true
+
+[tool.poetry]
+name = "chess"
+version = "0.1.0"
+description = ""
+authors = ["AndBoyS <andboyxd@gmail.com>"]
+readme = "README.md"
+packages = [{include = "src"}]
+
+[tool.poetry.dependencies]
+python = "~3.11"
+pyqt6 = "^6.7.1"
+
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.9.0"
+ruff = "^0.3.7"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
