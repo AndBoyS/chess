@@ -100,3 +100,9 @@ class Game:
         if piece is None:
             return []
         return get_possible_moves(piece=piece, board=self.board, start=coord, player=self.current_player)
+
+    def is_piece_friendly(self, coord: Coord) -> bool | None:
+        piece = self.board.get(coord)
+        if piece is None:
+            return None
+        return is_white(piece) == (self.current_player == Player.WHITE)

@@ -129,6 +129,10 @@ class BoardFrame(QtWidgets.QWidget):
         self._layout.removeWidget(piece)
 
     def move_piece(self, start: Coord, end: Coord) -> None:
+        try:
+            self.game.make_turn(start=start, end=end)
+        except ValueError:
+            return
         start_piece = self.piece_dict[start]
         if end in self.piece_dict:
             self.remove_piece(end)
@@ -136,22 +140,25 @@ class BoardFrame(QtWidgets.QWidget):
         self.remove_piece(start)
         self.add_piece(start_piece, coord=end)
 
-    def process_click(self, clicked_coord: Coord) -> None:
-        if self.selected_coord is None:
-            moves = self.game.get_possible_moves(clicked_coord)
-            if not moves:
-                return
-            if clicked_coord in self.piece_dict:
-                self.selected_coord = clicked_coord
-            self.show_possible_moves(clicked_coord)
-            return
-        try:
-            self.game.make_turn(start=self.selected_coord, end=clicked_coord)
-        except ValueError:
-            return
-        self.move_piece(start=self.selected_coord, end=clicked_coord)
         self.hide_possible_moves()
         self.selected_coord = None
+
+    def select_piece(self, coord: Coord) -> None:
+        self.hide_possible_moves()
+        moves = self.game.get_possible_moves(coord)
+        if not moves:
+            return
+        if coord in self.piece_dict:
+            self.selected_coord = coord
+        self.show_possible_moves(coord)
+
+    def process_click(self, clicked_coord: Coord) -> None:
+        is_piece_friendly = self.game.is_piece_friendly(clicked_coord)
+
+        if self.selected_coord is None or is_piece_friendly:
+            self.select_piece(clicked_coord)
+        else:
+            self.move_piece(start=self.selected_coord, end=clicked_coord)
 
     def show_possible_moves(self, coord: Coord) -> None:
         coords = self.game.get_possible_moves(coord)
