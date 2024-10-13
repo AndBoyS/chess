@@ -6,7 +6,23 @@ from src.backend.moves import Coord, is_coord
 from src.const import ASSETS_DIR, BOARD_SIZE, MIN_WINDOW_SIZE
 
 
-class PieceIcon(QtWidgets.QLabel):
+class BoardFrameDelegator:
+    _parent: "BoardFrame"
+    coord: Coord
+
+    def mousePressEvent(self, ev: QtGui.QMouseEvent | None) -> None:
+        if ev is None:
+            return
+
+        if ev.button() != Qt.MouseButton.LeftButton:
+            ev.ignore()
+            return
+
+        ev.accept()
+        self._parent.process_click(self.coord)
+
+
+class PieceIcon(QtWidgets.QLabel, BoardFrameDelegator):
     def __init__(self, parent: "BoardFrame", piece: Piece, coord: Coord) -> None:
         super().__init__(parent)
 
@@ -21,19 +37,8 @@ class PieceIcon(QtWidgets.QLabel):
         self._parent = parent
         self.setMinimumSize(1, 1)
 
-    def mousePressEvent(self, ev: QtGui.QMouseEvent | None) -> None:
-        if ev is None:
-            return
 
-        if ev.button() != Qt.MouseButton.LeftButton:
-            ev.ignore()
-            return
-
-        ev.accept()
-        self._parent.process_click(self.coord)
-
-
-class Field(QtWidgets.QWidget):
+class Field(QtWidgets.QWidget, BoardFrameDelegator):
     def __init__(self, parent: "BoardFrame", color: str, coord: Coord) -> None:
         super().__init__(parent)
         self.setAutoFillBackground(True)
