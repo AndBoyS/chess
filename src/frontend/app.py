@@ -1,4 +1,6 @@
+from enum import Enum
 from functools import cache
+from typing import Literal
 from PyQt6 import QtGui, QtWidgets
 from PyQt6.QtCore import Qt
 
@@ -39,16 +41,50 @@ class PieceIcon(QtWidgets.QLabel, BoardFrameDelegator):
         self.setMinimumSize(1, 1)
 
 
+FieldColorType = Literal["default", "active", "moved_out"]
+
+
+class FieldColor(Enum):
+    DEFAULT1 = QtGui.QColor("#F0D9B5")
+    DEFAULT2 = QtGui.QColor("#B58863")
+    ACTIVE = QtGui.QColor("#9AFAAE")
+    MOVED_OUT = QtGui.QColor("#a6bf7e")
+
+
+def blend_colors(color1: QtGui.QColor, color2: QtGui.QColor) -> QtGui.QColor:
+    color1_ratio = 0.25
+    color2_ratio = 0.75
+    return QtGui.QColor(
+        int(color1_ratio * color1.red()) + int(color2_ratio * color2.red()),
+        int(color1_ratio * color1.green()) + int(color2_ratio * color2.green()),
+        int(color1_ratio * color1.blue()) + int(color2_ratio * color2.blue()),
+        255,
+    )
+
+
 class Field(QtWidgets.QWidget, BoardFrameDelegator):
-    def __init__(self, parent: "BoardFrame", color: str, coord: Coord) -> None:
+    def __init__(self, parent: "BoardFrame", color: QtGui.QColor, coord: Coord) -> None:
         super().__init__(parent)
+        self.color_dict: dict[FieldColorType, QtGui.QColor] = {
+            "default": color,
+            "active": blend_colors(color, FieldColor.ACTIVE.value),
+            # Color of field when piece has just left it
+            "moved_out": blend_colors(color, FieldColor.MOVED_OUT.value),
+        }
+        self.default_color = color
         self.setAutoFillBackground(True)
-        palette = self.palette()
-        palette.setColor(QtGui.QPalette.ColorRole.Window, QtGui.QColor(color))
-        self.setPalette(palette)
+        self.set_color("default")
         self._parent = parent
         self.coord = coord
         self.setMinimumSize(1, 1)
+
+    def set_color(self, kind: FieldColorType) -> None:
+        color = self.color_dict[kind]
+        if kind != "default":
+            print(color.red(), color.green(), color.blue(), color.alpha())
+        palette = self.palette()
+        palette.setColor(QtGui.QPalette.ColorRole.Window, QtGui.QColor(color))
+        self.setPalette(palette)
 
 
 @cache
@@ -93,6 +129,8 @@ class BoardFrame(QtWidgets.QWidget):
 
         self.highlight_dict: dict[Coord, FieldHighlight] = {}
         self.visible_highlight: list[FieldHighlight] = []
+
+        self.field_dict: dict[Coord, Field] = {}
         self.draw_background()
 
         self.piece_dict: dict[Coord, PieceIcon] = {}
@@ -103,13 +141,17 @@ class BoardFrame(QtWidgets.QWidget):
 
         self.selected_coord: Coord | None = None
 
+        self.last_moved_in_field: Field | None = None
+        self.last_moved_out_field: Field | None = None
+
     def draw_background(self) -> None:
         for x in range(BOARD_SIZE):
             for y in range(BOARD_SIZE):
-                color = "#F0D9B5" if (x + y) % 2 == 0 else "#B58863"
+                color = FieldColor.DEFAULT1.value if (x + y) % 2 == 0 else FieldColor.DEFAULT2.value
                 coord = (x, y)
                 assert is_coord(coord)
                 field = Field(self, color=color, coord=coord)
+                self.field_dict[coord] = field
                 self._layout.addWidget(field, x, y)
 
                 highlight = FieldHighlight(parent=self, coord=coord)
@@ -142,14 +184,29 @@ class BoardFrame(QtWidgets.QWidget):
 
         self.hide_possible_moves()
         self.selected_coord = None
+        if self.last_moved_in_field is not None:
+            self.last_moved_in_field.set_color("default")
+
+        self.last_moved_in_field = self.field_dict[end]
+        self.last_moved_in_field.set_color("active")
+
+        if self.last_moved_out_field is not None:
+            self.last_moved_out_field.set_color("default")
+
+        self.last_moved_out_field = self.field_dict[start]
+        self.last_moved_out_field.set_color("moved_out")
 
     def select_piece(self, coord: Coord) -> None:
         self.hide_possible_moves()
+
+        if self.selected_coord is not None:
+            self.field_dict[self.selected_coord].set_color("default")
         moves = self.game.get_possible_moves(coord)
         if not moves:
             return
         if coord in self.piece_dict:
             self.selected_coord = coord
+            self.field_dict[self.selected_coord].set_color("active")
         self.show_possible_moves(coord)
 
     def process_click(self, clicked_coord: Coord) -> None:
