@@ -1,7 +1,8 @@
+from functools import cache
 from PyQt6 import QtGui, QtWidgets
 from PyQt6.QtCore import Qt
 
-from src.backend.game import Board, Game, Piece, is_white
+from src.backend.game import Game, Piece, is_white
 from src.backend.moves import Coord, is_coord
 from src.const import ASSETS_DIR, BOARD_SIZE, MIN_WINDOW_SIZE
 
@@ -49,32 +50,54 @@ class Field(QtWidgets.QWidget, BoardFrameDelegator):
         self.coord = coord
         self.setMinimumSize(1, 1)
 
-    def mousePressEvent(self, ev: QtGui.QMouseEvent | None) -> None:
-        if ev is None:
-            return
 
-        if ev.button() != Qt.MouseButton.LeftButton:
-            ev.ignore()
-            return
+@cache
+def dot_pixmap() -> QtGui.QPixmap:
+    return QtGui.QPixmap(str(ASSETS_DIR / "misc/dot.png"))
 
-        ev.accept()
-        self._parent.process_click(self.coord)
+
+@cache
+def circle_pixmap() -> QtGui.QPixmap:
+    return QtGui.QPixmap(str(ASSETS_DIR / "misc/circle.png"))
+
+
+class FieldHighlight(QtWidgets.QLabel, BoardFrameDelegator):
+    def __init__(self, parent: "BoardFrame", coord: Coord) -> None:
+        super().__init__(parent)
+
+        self.setScaledContents(True)
+        self.setMinimumSize(1, 1)
+        self._parent = parent
+        self.coord = coord
+
+    def show_on_empty_field(self) -> None:
+        self.setPixmap(dot_pixmap())
+        self.show()
+
+    def show_on_occupied_field(self) -> None:
+        self.setPixmap(circle_pixmap())
+        self.show()
 
 
 class BoardFrame(QtWidgets.QWidget):
-    def __init__(self, board: Board) -> None:
+    def __init__(self, game: Game) -> None:
         super().__init__()
 
+        self.game = game
         self.setContentsMargins(0, 0, 0, 0)
         layout = QtWidgets.QGridLayout()
         self._layout = layout
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         self.setLayout(layout)
+
+        self.highlight_dict: dict[Coord, FieldHighlight] = {}
+        self.visible_highlight: list[FieldHighlight] = []
         self.draw_background()
 
         self.piece_dict: dict[Coord, PieceIcon] = {}
-        for coord, piece in board.get_all_pieces():
+
+        for coord, piece in game.board.get_all_pieces():
             piece_icon = PieceIcon(self, piece=piece, coord=coord)
             self.add_piece(piece_icon, coord=coord)
 
@@ -88,6 +111,10 @@ class BoardFrame(QtWidgets.QWidget):
                 assert is_coord(coord)
                 field = Field(self, color=color, coord=coord)
                 self._layout.addWidget(field, x, y)
+
+                highlight = FieldHighlight(parent=self, coord=coord)
+                self.highlight_dict[coord] = highlight
+                self._layout.addWidget(highlight, *coord)
 
             self._layout.setColumnStretch(x, 1)
             self._layout.setRowStretch(x, 1)
@@ -111,18 +138,42 @@ class BoardFrame(QtWidgets.QWidget):
 
     def process_click(self, clicked_coord: Coord) -> None:
         if self.selected_coord is None:
+            moves = self.game.get_possible_moves(clicked_coord)
+            if not moves:
+                return
             if clicked_coord in self.piece_dict:
                 self.selected_coord = clicked_coord
+            self.show_possible_moves(clicked_coord)
+            return
+        try:
+            self.game.make_turn(start=self.selected_coord, end=clicked_coord)
+        except ValueError:
             return
         self.move_piece(start=self.selected_coord, end=clicked_coord)
+        self.hide_possible_moves()
         self.selected_coord = None
+
+    def show_possible_moves(self, coord: Coord) -> None:
+        coords = self.game.get_possible_moves(coord)
+        for coord in coords:
+            highlight = self.highlight_dict[coord]
+            if coord in self.piece_dict:
+                highlight.show_on_occupied_field()
+            else:
+                highlight.show_on_empty_field()
+            self.visible_highlight.append(highlight)
+
+    def hide_possible_moves(self) -> None:
+        for highlight in self.visible_highlight:
+            highlight.hide()
+        self.visible_highlight = []
 
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         game = Game()
-        board = BoardFrame(game.board)
+        board = BoardFrame(game)
         self.setCentralWidget(board)
         self.setMinimumSize(*MIN_WINDOW_SIZE)
 

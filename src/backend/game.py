@@ -94,3 +94,9 @@ class Game:
 
         self.board.move_piece(start=start, end=end)
         self.switch_player()
+
+    def get_possible_moves(self, coord: Coord) -> list[Coord]:
+        piece = self.board.get(coord)
+        if piece is None:
+            return []
+        return get_possible_moves(piece=piece, board=self.board, start=coord, player=self.current_player)
