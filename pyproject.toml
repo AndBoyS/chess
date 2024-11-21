@@ -1,6 +1,51 @@
 [tool.ruff]
 line-length = 120
 
+[tool.ruff.lint]
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    "SIM",
+    # isort
+    "I",
+    "ASYNC",
+    # comprehensions
+    "C4",
+    # implicit string concat
+    "ISC",
+    # pytest style
+    "PT",
+    # return
+    "RET",
+    # use pathlib
+    "PTH",
+    # remove commented code
+    "ERA",
+    # pandas-vet
+    "PD",
+    # use specific error code for type ignores
+    "PGH",
+    # pylint
+    "PL",
+    # numpy
+    "NPY",
+    "PERF",
+    "FURB",
+]
+ignore = [
+    # Line too long
+    "E501",
+    # open should be replaced by Path.open
+    "PTH123",
+]
+
 [tool.mypy]
 strict = true
 disallow_untyped_calls = false

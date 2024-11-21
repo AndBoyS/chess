@@ -1,6 +1,7 @@
 from enum import Enum
 from functools import cache
 from typing import Literal
+
 from PyQt6 import QtGui, QtWidgets
 from PyQt6.QtCore import Qt
 

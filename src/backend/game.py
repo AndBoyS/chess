@@ -4,7 +4,6 @@ from typing import Iterator, Literal, get_args
 from src.backend.moves import Coord, get_possible_moves
 from src.const import BOARD_SIZE
 
-
 WhitePiece = Literal["P", "N", "B", "R", "Q", "K"]
 BlackPiece = Literal["p", "n", "b", "r", "q", "k"]
 Piece = WhitePiece | BlackPiece
@@ -43,8 +42,7 @@ class Board:
         self[end] = piece
 
     def get_all_pieces(self) -> Iterator[tuple[Coord, Piece]]:
-        for coord, piece in self._board.items():
-            yield coord, piece
+        yield from self._board.items()
 
 
 def is_white(piece: Piece) -> bool:

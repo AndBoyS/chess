@@ -1,11 +1,9 @@
 from typing import TYPE_CHECKING, Literal, TypeGuard
 
-
 from src.const import BOARD_SIZE, FILE_TO_I, FILES
 
-
 if TYPE_CHECKING:
-    from src.backend.game import Board, Player, Piece
+    from src.backend.game import Board, Piece, Player
 
 
 class Position(str):
@@ -13,7 +11,7 @@ class Position(str):
 
 
 def is_position(pos: str) -> TypeGuard[Position]:
-    if len(pos) != 2:
+    if len(pos) != 2:  # noqa: PLR2004
         return False
 
     x = pos[0]
@@ -211,7 +209,7 @@ def get_all_moves(piece: "Piece", coord: Coord, player: "Player", board: "Board"
 
 
 def get_possible_moves(piece: "Piece", board: "Board", start: "Coord", player: "Player") -> list[Coord]:
-    from src.backend.game import is_white, Player
+    from src.backend.game import Player, is_white
 
     moves: list[Coord] = []
 
