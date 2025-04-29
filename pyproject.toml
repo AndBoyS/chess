@@ -62,10 +62,10 @@ packages = [{include = "src"}]
 [tool.poetry.dependencies]
 python = "~3.11"
 pyqt6 = "^6.7.1"
+ruff = "^0.11.7"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.9.0"
-ruff = "^0.3.7"
 
 [build-system]
 requires = ["poetry-core"]
