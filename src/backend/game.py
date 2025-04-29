@@ -16,10 +16,10 @@ class Board:
         black_row: list[Piece] = ["r", "n", "b", "q", "k", "b", "n", "r"]
 
         for y, (w_piece, b_piece) in enumerate(zip(white_row, black_row)):
-            self._board[(BOARD_SIZE - 1, y)] = w_piece  # type: ignore[index]
-            self._board[(0, y)] = b_piece  # type: ignore[index]
-            self._board[(BOARD_SIZE - 2, y)] = "P"  # type: ignore[index]
-            self._board[(1, y)] = "p"  # type: ignore[index]
+            self._board[(BOARD_SIZE - 1, y)] = w_piece
+            self._board[(0, y)] = b_piece
+            self._board[(BOARD_SIZE - 2, y)] = "P"
+            self._board[(1, y)] = "p"
 
     def __getitem__(self, coord: Coord) -> Piece:
         return self._board[coord]

@@ -21,8 +21,7 @@ def is_position(pos: str) -> TypeGuard[Position]:
     return True
 
 
-CoordInt = Literal[0, 1, 2, 3, 4, 5, 6, 7, 8]
-Coord = tuple[CoordInt, CoordInt]
+Coord = tuple[int, int]
 
 
 def pos_to_coord(pos: Position) -> Coord:
